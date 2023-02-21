@@ -3,7 +3,7 @@ module github.com/rabobank/mfsb
 go 1.20
 
 require (
-	github.com/aws/aws-sdk-go v1.44.205
+	github.com/aws/aws-sdk-go v1.44.206
 	github.com/cloudfoundry-community/go-cfenv v1.18.0
 	github.com/go-sql-driver/mysql v1.7.0
 	github.com/gorilla/mux v1.8.0
