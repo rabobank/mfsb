@@ -1,0 +1,1 @@
+select * from service_instance s, iaas_instance a where s.iaas_instance_id=a.id order by organization_name,space_name,instance_name;
