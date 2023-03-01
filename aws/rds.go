@@ -84,10 +84,11 @@ func SubmitProvisionRDSDB(iaasInstance db.IaaSInstance, serviceInstance db.Servi
 		} else {
 			input := &rds.RestoreDBInstanceFromDBSnapshotInput{
 				AutoMinorVersionUpgrade:     &autoMinorVersionUpgrade,
+				CopyTagsToSnapshot:          &copyTagsToSnapshot,
 				DBInstanceClass:             &dbInstanceClass,
 				DBInstanceIdentifier:        &iaasInstance.InternalId,
-				DBSubnetGroupName:           &conf.RDSSubnetGrp,
 				DBSnapshotIdentifier:        &restoreFromSnapshot,
+				DBSubnetGroupName:           &conf.RDSSubnetGrp,
 				EnableCloudwatchLogsExports: logs,
 				Engine:                      &engine,
 				MultiAZ:                     &multiAZ,
@@ -252,6 +253,12 @@ func StartPollForStatusRDSDB(iaasInstance db.IaaSInstance) {
 						iaasInstance.LastMessage = fmt.Sprintf("RDS DB instance %s successfully created", iaasInstance.InternalId)
 						_ = db.UpdateStatusServiceInstanceForIaaSId(serviceInstance.IaaSInstanceId, db.StatusSucceeded)
 						_ = db.UpdateIaaSInstance(iaasInstance)
+						// update the database master user/password (this is actually only required during a RestoreFromSnaphot, but it is easier to do it for all cases)
+						input := &rds.ModifyDBInstanceInput{DBInstanceIdentifier: dbInstances[0].DBInstanceIdentifier, MasterUserPassword: &iaasInstance.ServicePassword}
+						if _, err = conf.RDSClient.ModifyDBInstance(input); err != nil {
+							fmt.Printf("failed to modify master password for rds db %s: %s\n", *dbInstances[0].DBInstanceIdentifier, err)
+						}
+
 						err = createIAMRoleIfNotExists(&iaasInstance, &serviceInstance)
 						if err != nil {
 							fmt.Printf("failed to create the IAM role for %s: %s", iaasInstance.InternalId, err)
