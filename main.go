@@ -16,7 +16,7 @@ import (
 )
 
 func main() {
-	fmt.Printf("mfsb starting for cf env %s, Commit:%s\n", conf.VERSION, conf.COMMIT)
+	fmt.Printf("mfsb starting for cf env %s, version:%s, commit:%s\n", conf.CfEnv, conf.VERSION, conf.COMMIT)
 
 	conf.EnvironmentComplete()
 
