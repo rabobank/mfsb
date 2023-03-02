@@ -42,8 +42,12 @@ func InsertIaaSInstance(iaasInstance IaaSInstance) (int64, error) {
 	if err != nil {
 		return 0, err
 	}
+	urlEncrypted, err := util.Encrypt(iaasInstance.ServiceUrl)
+	if err != nil {
+		return 0, err
+	}
 	result, err := db.Exec("insert into iaas_instance(internal_id, Status, last_status_update, last_message, service_url, service_user, service_password) values(?,?,?,?,?,?,?)",
-		iaasInstance.InternalId, iaasInstance.Status, iaasInstance.LastStatusUpdate, iaasInstance.LastMessage, iaasInstance.ServiceUrl, iaasInstance.ServiceUser, passwordEncrypted)
+		iaasInstance.InternalId, iaasInstance.Status, iaasInstance.LastStatusUpdate, iaasInstance.LastMessage, urlEncrypted, iaasInstance.ServiceUser, passwordEncrypted)
 	if err != nil {
 		fmt.Printf("failed to insert IaaSInstance %v, error: %s\n", iaasInstance, err)
 	} else {
@@ -62,8 +66,12 @@ func UpdateIaaSInstance(iaasInstance IaaSInstance) error {
 	if err != nil {
 		return err
 	}
+	urlEncrypted, err := util.Encrypt(iaasInstance.ServiceUrl)
+	if err != nil {
+		return err
+	}
 	_, err = db.Exec("update iaas_instance set internal_id=?, status=?, last_status_update=?, last_message=?, service_url=?, service_user=?, service_password=? where id=?",
-		iaasInstance.InternalId, iaasInstance.Status, iaasInstance.LastStatusUpdate, iaasInstance.LastMessage, iaasInstance.ServiceUrl, iaasInstance.ServiceUser, passwordEncrypted, iaasInstance.Id)
+		iaasInstance.InternalId, iaasInstance.Status, iaasInstance.LastStatusUpdate, iaasInstance.LastMessage, urlEncrypted, iaasInstance.ServiceUser, passwordEncrypted, iaasInstance.Id)
 	if err != nil {
 		fmt.Printf("failed to update IaaSInstance %v, error: %s\n", iaasInstance, err)
 	}
@@ -132,13 +140,17 @@ func getIaaSInstances(rows *sql.Rows) []IaaSInstance {
 				if err != nil {
 					log.Printf("failed to decrypt the service password for iaas_instance with id %d, error: %s", Id, err)
 				}
+				urlDecrypted, err := util.Decrypt(serviceUrl)
+				if err != nil {
+					log.Printf("failed to decrypt the service url for iaas_instance with id %d, error: %s", Id, err)
+				}
 				result = append(result, IaaSInstance{
 					Id:               Id,
 					InternalId:       internalId,
 					Status:           status,
 					LastStatusUpdate: lastStatusUpdate,
 					LastMessage:      lastMessage,
-					ServiceUrl:       serviceUrl,
+					ServiceUrl:       urlDecrypted,
 					ServiceUser:      serviceUser,
 					ServicePassword:  passwordDecrypted,
 				})
